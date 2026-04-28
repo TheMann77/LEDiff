@@ -233,7 +233,6 @@ class FeatureFusion(nn.Module):
         # 从预训练模型中加载权重
         state_dict = torch.load(pretrained_model_path, map_location=device)
         self.load_state_dict(state_dict, strict=False)
-        print("Pretrained weights loaded successfully.")
 
 
 class StableDiffusionITMPipeline(
@@ -1076,7 +1075,6 @@ class StableDiffusionITMPipeline(
         # latents_tensor = torch.from_numpy(latents_np).float().to(device).unsqueeze(0) * self.vae.config.scaling_factor
         image_tensor = preprocess_image(img_name)#preprocess_image('/HPS/RawDiff/work/LED/over_exposed_images/bulb_1.jpg') #preprocess_image('/sensei-fs/users/wchao/Codes/Ours/over_exposed_images/IMG_6568.JPG', device = device)#preprocess_image('/sensei-fs/users/wchao/Codes/Ours/over_exposed_images/P1011321.JPG', device = device)#
         latents_tensor = (self.vae.encode(image_tensor).latent_dist.mode()) * self.vae.config.scaling_factor
-        print('latents_code type is', latents_tensor.dtype)
         # img = torch.from_numpy(img).float().to(device)
         latents = self.prepare_latents(
             batch_size * num_images_per_prompt,
@@ -1088,9 +1086,6 @@ class StableDiffusionITMPipeline(
             generator,
             latents,
         )
-        print('latents shape is', latents.shape)
-        print('latents_tensor shape is', latents_tensor.shape)
-        print('self.unet.config.in_channels are', self.unet.config.in_channels)
         # sin_1 = generate_sinusoid_tensor_from_latent(latents, frequency=2.0, amplitude=2**-3)
         # sin_2 = generate_sinusoid_tensor_from_latent(latents, frequency=2.0, amplitude=2**0)
         # sin_3 = generate_sinusoid_tensor_from_latent(latents, frequency=2.0, amplitude=2**3)
@@ -1238,9 +1233,11 @@ class StableDiffusionITMPipeline(
 
 
         if not output_type == "latent":
+            if self.model_path:
+                pretrained_model_path = os.path.join(self.model_path, "vae", "merge_model.pth")
+            else:
+                pretrained_model_path = "LEDiff/model_highlight/vae/merge_model.pth"
             
-            pretrained_model_path = "/HPS/RawDiff/work/LED/sd_model/vae/merge_model.pth"#"/sensei-fs/users/wchao/Codes/diffusers/resutls/sd_model/StabelDiffusion_weights/vae/merge_model.pth"
-
             # 实例化 FeatureFusion 类
             net = FeatureFusion(in_channels=4, kernel_size=1, padding=0).to(device)
             net.load_pretrained_weights(pretrained_model_path, device = device)
@@ -1344,7 +1341,6 @@ class StableDiffusionITMPipeline(
         image = self.image_processor.postprocess(image, output_type=output_type, do_denormalize=do_denormalize)
         # print('img_normal min is', np.min(image))
         # print('img_normal max is', np.max(image))
-        print('image shape is', image.shape)
 
         # Offload all models
         self.maybe_free_model_hooks()

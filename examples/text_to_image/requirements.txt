@@ -6,3 +6,8 @@ ftfy
 tensorboard
 Jinja2
 peft==0.7.0
+opencv-python
+ffmpeg-python
+transformers==4.30.2
+scipy
+natsort

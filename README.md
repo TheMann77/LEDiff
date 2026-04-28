@@ -26,3 +26,10 @@ You can find scripts for:
 - **Inverse Tone Mapping**
 
 
+## Setup
+```shell
+pip install -e .
+cd examples/text_to_image
+pip install -r requirements.txt
+pip install -r requirements_flax.txt
+```

@@ -2,6 +2,8 @@ import os
 import argparse
 from pathlib import Path
 import time
+from natsort import natsorted
+from tqdm import tqdm
 
 import cv2
 import numpy as np
@@ -85,6 +87,8 @@ def main():
 
     pipe = StableDiffusionITMPipeline.from_pretrained(model_path, torch_dtype=torch.float32)
     pipe.to(device)
+    pipe.model_path = model_path
+    pipe.set_progress_bar_config(disable=True)
 
     captions = [
         "A tall glass of water placed on a wooden floor, illuminated by intense sunlight creating sharp bright highlights and shadows.",
@@ -95,12 +99,12 @@ def main():
     ]
 
     in_dir = Path(image_folder)
-    image_files = sorted([p for p in in_dir.iterdir() if p.suffix.lower() in [".jpg", ".jpeg", ".png"]])
-    print("image_files are", [p.name for p in image_files])
+    image_files = natsorted([p for p in in_dir.iterdir() if p.suffix.lower() in [".jpg", ".jpeg", ".png"]])
 
     os.makedirs(output_hdr_path, exist_ok=True)
 
-    for idx, img_path in enumerate(image_files):
+    print("Generating images:")
+    for idx, img_path in enumerate(tqdm(image_files)):
         str_prompt = captions[idx % len(captions)]
         npy_save_name = str(Path(output_hdr_path) / f"img_{idx:03d}")
 
@@ -111,9 +115,7 @@ def main():
         out_name = str(Path(output_hdr_path) / f"hdr_itm_{idx:03d}.hdr")
         cv2.imwrite(out_name, hdr_bgr)
 
-        print(f"Saved {out_name} in {dt:.2f}s")
 
-    print("All done.")
 
 
 if __name__ == "__main__":
