@@ -1284,7 +1284,8 @@ class StableDiffusionITMPipeline(
             ]
 
             latents_scaling_medium = (latent_medium).squeeze(0).detach().cpu().numpy()
-            np.save(npy_save_name, latents_scaling_medium)
+            if npy_save_name:
+                np.save(npy_save_name, latents_scaling_medium)
 
             latents_low = latents_low / self.vae.config.scaling_factor
             # latents_low[0:1, :, :] -= 10   # 前两个通道

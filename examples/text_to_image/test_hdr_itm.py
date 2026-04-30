@@ -1,7 +1,6 @@
 import os
 import argparse
 from pathlib import Path
-import time
 from natsort import natsorted
 from tqdm import tqdm
 
@@ -19,6 +18,8 @@ def parse_args():
     parser.add_argument("--image_folder", type=str, required=True, help="Folder with input LDR images")
     parser.add_argument("--output_hdr_path", type=str, required=True, help="Folder to save output HDR results")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for generation")
+    parser.add_argument('--keep_size', dest='keep_size', action='store_true', help="restore the output HDRs back to the original image size")
+    parser.set_defaults(keep_size=False)
     return parser.parse_args()
 
 
@@ -82,6 +83,7 @@ def main():
     image_folder = args.image_folder
     output_hdr_path = args.output_hdr_path
     seed = args.seed
+    keep_size = args.keep_size
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -90,33 +92,28 @@ def main():
     pipe.model_path = model_path
     pipe.set_progress_bar_config(disable=True)
 
-    captions = [
-        "A tall glass of water placed on a wooden floor, illuminated by intense sunlight creating sharp bright highlights and shadows.",
-        "A rocky shoreline at sunset with calm waters, the sky glowing softly above the horizon.",
-        "A scenic landscape with rocky terrain, scattered trees, and an overcast sky.",
-        "A close-up of a red wooden wall with white trim under bright sunlight, part of a traditional building.",
-        "A small golden owl figurine on a wooden floor, bathed in strong sunlight with dramatic reflections and shadows.",
-    ]
-
     in_dir = Path(image_folder)
     image_files = natsorted([p for p in in_dir.iterdir() if p.suffix.lower() in [".jpg", ".jpeg", ".png"]])
 
     os.makedirs(output_hdr_path, exist_ok=True)
 
+    all_hdr_bgr = []
     print("Generating images:")
     for idx, img_path in enumerate(tqdm(image_files)):
-        str_prompt = captions[idx % len(captions)]
-        npy_save_name = str(Path(output_hdr_path) / f"img_{idx:03d}")
+        str_prompt = "A photo"
 
-        result = pipe(prompt=str_prompt, img_name=str(img_path), npy_save_name=npy_save_name, seed=seed).images
+        result = pipe(prompt=str_prompt, img_name=str(img_path), seed=seed).images
 
-        hdr = np.exp(result[1])
+        hdr = np.exp(result[0]).astype(np.float32)
         hdr_bgr = cv2.cvtColor(hdr.astype(np.float32), cv2.COLOR_RGB2BGR)
-        out_name = str(Path(output_hdr_path) / f"hdr_itm_{idx:03d}.hdr")
+        if keep_size:
+            original_img = cv2.imread(img_path)
+            h, w = original_img.shape[:2]
+            hdr_bgr = cv2.resize(hdr_bgr, (w, h), interpolation=cv2.INTER_CUBIC)
+        out_name = str(Path(output_hdr_path) / f"hdr_{idx}.hdr")
         cv2.imwrite(out_name, hdr_bgr)
-
-
-
-
+        all_hdr_bgr.append(hdr_bgr)
+    all_hdr_bgr = np.stack(all_hdr_bgr)
+    np.save(str(Path(output_hdr_path) / f"hdr.npy"), all_hdr_bgr)
 if __name__ == "__main__":
     main()
