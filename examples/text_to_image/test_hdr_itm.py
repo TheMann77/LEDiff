@@ -104,7 +104,7 @@ def main():
 
         result = pipe(prompt=str_prompt, img_name=str(img_path), seed=seed).images
 
-        hdr = np.exp(result[0]).astype(np.float32)
+        hdr = np.exp(result[1]).astype(np.float32)
         hdr_bgr = cv2.cvtColor(hdr.astype(np.float32), cv2.COLOR_RGB2BGR)
         if keep_size:
             original_img = cv2.imread(img_path)
@@ -114,6 +114,6 @@ def main():
         cv2.imwrite(out_name, hdr_bgr)
         all_hdr_bgr.append(hdr_bgr)
     all_hdr_bgr = np.stack(all_hdr_bgr)
-    np.save(str(Path(output_hdr_path) / f"hdr.npy"), all_hdr_bgr)
+    np.save(str(Path(output_hdr_path) / f"hdr_bgr.npy"), all_hdr_bgr)
 if __name__ == "__main__":
     main()
