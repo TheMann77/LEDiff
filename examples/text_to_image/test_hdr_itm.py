@@ -110,7 +110,7 @@ def main():
             original_img = cv2.imread(img_path)
             h, w = original_img.shape[:2]
             hdr_bgr = cv2.resize(hdr_bgr, (w, h), interpolation=cv2.INTER_CUBIC)
-        out_name = str(Path(output_hdr_path) / f"hdr_{idx}.hdr")
+        out_name = str(Path(output_hdr_path) / f"frames/hdr_{idx}.hdr")
         cv2.imwrite(out_name, hdr_bgr)
         all_hdr_bgr.append(hdr_bgr)
     all_hdr_bgr = np.stack(all_hdr_bgr)
