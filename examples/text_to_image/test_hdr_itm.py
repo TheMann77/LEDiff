@@ -94,8 +94,8 @@ def main():
 
     in_dir = Path(image_folder)
     image_files = natsorted([p for p in in_dir.iterdir() if p.suffix.lower() in [".jpg", ".jpeg", ".png"]])
-
     os.makedirs(output_hdr_path, exist_ok=True)
+    os.makedirs(os.path.join(output_hdr_path, "frames"), exist_ok=True)
 
     all_hdr_bgr = []
     print("Generating images:")
@@ -115,5 +115,6 @@ def main():
         all_hdr_bgr.append(hdr_bgr)
     all_hdr_bgr = np.stack(all_hdr_bgr)
     np.save(str(Path(output_hdr_path) / f"hdr_bgr.npy"), all_hdr_bgr)
+
 if __name__ == "__main__":
     main()
